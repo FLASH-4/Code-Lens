@@ -52,8 +52,21 @@ def _normalize_provider(provider: str) -> str:
 # MongoDB connection
 mongo_url = _get_env("MONGO_URL")
 db_name = _get_env("DB_NAME", "code_explainer")
-mongo_client = AsyncIOMotorClient(mongo_url) if mongo_url else None
-db = mongo_client[db_name] if mongo_client else None
+mongo_client = None
+db = None
+
+if mongo_url:
+    try:
+        mongo_client = AsyncIOMotorClient(
+            mongo_url,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+        )
+        db = mongo_client[db_name]
+    except Exception as e:
+        logger.warning(f"MongoDB connection failed: {e}")
+        mongo_client = None
+        db = None
 
 # LLM config
 LLM_PROVIDER = _normalize_provider(_get_env("LLM_PROVIDER", "AI21-Jamba-1.5-Large"))

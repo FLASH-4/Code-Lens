@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build output
+build/
+dist/
+*.egg-info/
+
+# Environment files — never commit actual keys
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local MongoDB dumps
+*.bson
+dump/
+
+test_reports/
+memory/

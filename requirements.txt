@@ -1,0 +1,118 @@
+# ============================================================
+#  CODE EXPLAINER — PowerShell setup commands (Windows)
+# ============================================================
+#
+#  ⚠️  NOTE: This file is a COPY-PASTE CHEAT SHEET of PowerShell
+#     commands — it is NOT a pip requirements file.
+#     The real Python dependencies live in:  backend/requirements.txt
+#
+#  ✅  Copy-paste the blocks below into PowerShell one at a time.
+#     This file is the canonical Windows setup cheat sheet.
+#     For production, deploy backend + frontend as separate Vercel projects
+#     and use MongoDB Atlas plus a free-tier or student-access AI key.
+#
+# ============================================================
+
+
+# ------------------------------------------------------------
+#  0. PREREQUISITES (install these first, one-time)
+# ------------------------------------------------------------
+#  - Python 3.10+        https://www.python.org/downloads/
+#  - Node.js 18+         https://nodejs.org/
+#  - MongoDB Community   https://www.mongodb.com/try/download/community
+#  - Git (optional)      https://git-scm.com/
+#
+#  After installing Node.js, install Yarn globally:
+npm install -g yarn
+
+
+# ------------------------------------------------------------
+#  1. BACKEND — Python virtual environment + dependencies
+# ------------------------------------------------------------
+cd backend
+
+# Create and activate a virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# If activation is blocked by execution policy, run this ONCE (as Admin) and retry:
+#   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Install Python dependencies
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+# Create your .env from the template and fill in your remote MONGO_URL plus
+# GEMINI_API_KEY or OPENAI_API_KEY / OPENAI_BASE_URL
+Copy-Item .env.example .env
+notepad .env
+
+cd ..
+
+
+# ------------------------------------------------------------
+#  2. FRONTEND — React app + dependencies
+# ------------------------------------------------------------
+cd frontend
+
+# Install all npm packages (use yarn, NOT npm)
+yarn install
+
+# Create .env from template; set REACT_APP_BACKEND_URL if the frontend is hosted separately
+Copy-Item .env.example .env
+
+cd ..
+
+
+# ------------------------------------------------------------
+#  3. RUN THE APP (open TWO PowerShell windows)
+# ------------------------------------------------------------
+
+# --- Window 1: start the backend ---
+cd backend
+.\.venv\Scripts\Activate.ps1
+uvicorn server:app --reload --host 0.0.0.0 --port 8001
+
+# --- Window 2: start the frontend ---
+cd frontend
+yarn start
+
+# Then open:  http://localhost:3000
+
+
+# ------------------------------------------------------------
+#  4. QUICK SANITY CHECK (optional)
+# ------------------------------------------------------------
+Invoke-RestMethod http://localhost:8001/api/health
+
+# Test an explanation:
+$body = @{ code = "print('hello')" } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8001/api/explain -Method Post -Body $body -ContentType "application/json"
+
+
+# ------------------------------------------------------------
+#  5. MONGODB (if not running as a service)
+# ------------------------------------------------------------
+# Start MongoDB manually on Windows:
+# mongod --dbpath "C:\data\db"
+#
+# Or install as a service (recommended) during MongoDB setup.
+
+
+# ------------------------------------------------------------
+#  6. TROUBLESHOOTING
+# ------------------------------------------------------------
+# "cannot be loaded because running scripts is disabled"
+#   -> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+#
+# "python is not recognized"
+#   -> Re-run the Python installer and tick "Add Python to PATH"
+#
+# "yarn : The term 'yarn' is not recognized"
+#   -> npm install -g yarn   (then close & reopen PowerShell)
+#
+# Backend error: 500 / 401 from the LLM provider
+#   -> Your GEMINI_API_KEY or OPENAI_API_KEY / OPENAI_BASE_URL is missing or invalid. Edit backend\.env
+#
+# Frontend can't reach backend
+#   -> Confirm frontend\.env has: REACT_APP_BACKEND_URL=http://localhost:8001
